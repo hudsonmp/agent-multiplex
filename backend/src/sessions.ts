@@ -3,6 +3,7 @@ import { AGENT_IDS } from "./agents.js";
 import {
   addWorktree,
   assertGitRepo,
+  cloneIfNeeded,
   removeWorktree,
   validateBranch,
   worktreePath,
@@ -21,10 +22,13 @@ export type CreateSessionInput = {
   base_branch: string;
   claude_branch: string;
   gemini_branch: string;
+  anthropic_api_key?: string;
+  gemini_api_key?: string;
 };
 
 export async function createSession(input: CreateSessionInput): Promise<Manifest> {
-  await assertGitRepo(input.repo_path);
+  const resolvedRepo = await cloneIfNeeded(input.repo_path);
+  await assertGitRepo(resolvedRepo);
   validateBranch(input.base_branch);
   validateBranch(input.claude_branch);
   validateBranch(input.gemini_branch);
@@ -36,29 +40,29 @@ export async function createSession(input: CreateSessionInput): Promise<Manifest
   const shortId = id.slice(0, 8);
   await ensureSessionDir(id);
 
-  const claudeWt = worktreePath(input.repo_path, "claude", shortId);
-  const geminiWt = worktreePath(input.repo_path, "gemini", shortId);
+  const claudeWt = worktreePath(resolvedRepo, "claude", shortId);
+  const geminiWt = worktreePath(resolvedRepo, "gemini", shortId);
 
-  await addWorktree(input.repo_path, claudeWt, input.claude_branch, input.base_branch);
+  await addWorktree(resolvedRepo, claudeWt, input.claude_branch, input.base_branch);
   try {
-    await addWorktree(input.repo_path, geminiWt, input.gemini_branch, input.base_branch);
+    await addWorktree(resolvedRepo, geminiWt, input.gemini_branch, input.base_branch);
   } catch (e) {
-    await removeWorktree(input.repo_path, claudeWt);
+    await removeWorktree(resolvedRepo, claudeWt);
     throw e;
   }
 
   const manifest: Manifest = {
     id,
     created_at: new Date().toISOString(),
-    repo_path: input.repo_path,
+    repo_path: resolvedRepo,
     base_branch: input.base_branch,
     claude: { branch: input.claude_branch, worktree: claudeWt },
     gemini: { branch: input.gemini_branch, worktree: geminiWt },
   };
   await writeManifest(manifest);
 
-  spawnPane(id, "claude", claudeWt);
-  spawnPane(id, "gemini", geminiWt);
+  spawnPane(id, "claude", claudeWt, input.anthropic_api_key);
+  spawnPane(id, "gemini", geminiWt, input.gemini_api_key);
 
   return manifest;
 }

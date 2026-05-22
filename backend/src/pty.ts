@@ -43,19 +43,29 @@ const panes = new Map<string, Pane>();
 
 const key = (sessionId: string, agent: AgentId) => `${sessionId}:${agent}`;
 
-export function spawnPane(sessionId: string, agent: AgentId, cwd: string): Pane {
+export function spawnPane(
+  sessionId: string,
+  agent: AgentId,
+  cwd: string,
+  apiKey?: string,
+): Pane {
   const a = AGENTS[agent];
   const log = new TimestampedLog(logPath(sessionId, agent));
 
   let proc: pty.IPty | null = null;
   let spawnError: Error | null = null;
   try {
+    const env: { [key: string]: string } = {
+      ...(process.env as { [key: string]: string }),
+      PATH: userPath(),
+    };
+    if (apiKey) env[a.envKey] = apiKey;
     proc = pty.spawn(a.command, a.args, {
       name: "xterm-256color",
       cols: 120,
       rows: 32,
       cwd,
-      env: { ...(process.env as { [key: string]: string }), PATH: userPath() },
+      env,
     });
   } catch (e) {
     spawnError = e as Error;
