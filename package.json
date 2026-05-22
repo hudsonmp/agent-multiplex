@@ -3,11 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "description": "Live web view for driving Claude Code and gemini-cli side-by-side in parallel git worktrees.",
-  "workspaces": ["backend", "frontend"],
+  "workspaces": ["backend", "frontend", "site"],
   "scripts": {
     "dev": "concurrently -k -n backend,frontend -c blue,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w frontend && npm run build -w backend",
+    "build:site": "npm install --include-workspace-root --workspaces=false && npm install --workspace site && npm install --workspace frontend && VITE_BACKEND_URL=http://localhost:4040 npm run build -w frontend",
     "start": "node backend/dist/server.js",
+    "start:site": "node site/server.js",
     "test": "npm run test -w backend"
   },
   "devDependencies": {

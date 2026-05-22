@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { PaneSocket, b64decode } from "../lib/ws";
+import { backendWsUrl } from "../lib/api";
 
 type Props = {
   sessionId: string;
@@ -36,8 +37,7 @@ export function AgentPane({ sessionId, agent, worktree, branch }: Props) {
     term.open(host);
     fit.fit();
 
-    const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    const sock = new PaneSocket(`${proto}//${location.host}/ws/${sessionId}/${agent}`);
+    const sock = new PaneSocket(backendWsUrl(`/ws/${sessionId}/${agent}`));
 
     sock.onOpen = () => {
       setStatus("open");

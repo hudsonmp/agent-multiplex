@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, type Manifest } from "../lib/api";
+import { api, BACKEND_URL, type Manifest } from "../lib/api";
 
 function defaultBranchName(agent: "claude" | "gemini"): string {
   const iso = new Date()
@@ -11,27 +11,64 @@ function defaultBranchName(agent: "claude" | "gemini"): string {
   return `mux/${agent}-${iso}`;
 }
 
+function loadStored(key: string): string {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function store(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore quota errors
+  }
+}
+
+type BackendStatus = "checking" | "online" | "offline";
+
 export function Home() {
   const nav = useNavigate();
+  const [status, setStatus] = useState<BackendStatus>("checking");
   const [sessions, setSessions] = useState<Manifest[]>([]);
-  const [repoPath, setRepoPath] = useState("");
+  const [repoInput, setRepoInput] = useState(() => loadStored("amux:repo"));
   const [branches, setBranches] = useState<string[]>([]);
   const [baseBranch, setBaseBranch] = useState("");
   const [claudeBranch, setClaudeBranch] = useState(defaultBranchName("claude"));
   const [geminiBranch, setGeminiBranch] = useState(defaultBranchName("gemini"));
+  const [anthropicKey, setAnthropicKey] = useState(() => loadStored("amux:anthropic_key"));
+  const [geminiKey, setGeminiKey] = useState(() => loadStored("amux:gemini_key"));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const refresh = () => api.listSessions().then(setSessions).catch(() => setSessions([]));
+  const [revealKeys, setRevealKeys] = useState(false);
 
   useEffect(() => {
-    refresh();
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        await api.health();
+        if (!cancelled) {
+          setStatus("online");
+          api.listSessions().then(setSessions).catch(() => setSessions([]));
+        }
+      } catch {
+        if (!cancelled) setStatus("offline");
+      }
+    };
+    ping();
+    const t = setInterval(ping, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, []);
 
   const loadBranches = async () => {
     setError(null);
     try {
-      const list = await api.listBranches(repoPath);
+      const list = await api.listBranches(repoInput);
       setBranches(list);
       if (list.length > 0 && !baseBranch) setBaseBranch(list[0]);
     } catch (e) {
@@ -43,12 +80,17 @@ export function Home() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    store("amux:repo", repoInput);
+    store("amux:anthropic_key", anthropicKey);
+    store("amux:gemini_key", geminiKey);
     try {
       const m = await api.createSession({
-        repo_path: repoPath,
-        base_branch: baseBranch,
+        repo_path: repoInput,
+        base_branch: baseBranch || "main",
         claude_branch: claudeBranch,
         gemini_branch: geminiBranch,
+        anthropic_api_key: anthropicKey || undefined,
+        gemini_api_key: geminiKey || undefined,
       });
       nav(`/sessions/${m.id}`);
     } catch (err) {
@@ -61,7 +103,8 @@ export function Home() {
   const close = async (id: string) => {
     try {
       await api.closeSession(id);
-      refresh();
+      const next = await api.listSessions();
+      setSessions(next);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -71,20 +114,35 @@ export function Home() {
     <div className="home">
       <h1>agent-multiplex</h1>
 
+      <div className={`status status-${status}`}>
+        {status === "checking" && "looking for local backend…"}
+        {status === "online" && (
+          <>
+            <span className="dot" /> backend online {BACKEND_URL && <code>· {BACKEND_URL}</code>}
+          </>
+        )}
+        {status === "offline" && (
+          <>
+            <span className="dot" /> backend not running. Start it locally:{" "}
+            <code>git clone github.com/hudsonmp/agent-multiplex && cd agent-multiplex && npm install && npm run dev</code>
+          </>
+        )}
+      </div>
+
       {error && <div className="error">{error}</div>}
 
       <h2>new session</h2>
       <form className="card" onSubmit={submit}>
         <div className="field">
-          <label>repo path</label>
+          <label>repo</label>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
             <input
-              value={repoPath}
-              onChange={(e) => setRepoPath(e.target.value)}
-              placeholder="/Users/you/your-repo"
+              value={repoInput}
+              onChange={(e) => setRepoInput(e.target.value)}
+              placeholder="/Users/you/your-repo  or  https://github.com/foo/bar"
               required
             />
-            <button type="button" onClick={loadBranches} disabled={!repoPath}>
+            <button type="button" onClick={loadBranches} disabled={!repoInput}>
               load branches
             </button>
           </div>
@@ -116,8 +174,43 @@ export function Home() {
           <label>gemini branch</label>
           <input value={geminiBranch} onChange={(e) => setGeminiBranch(e.target.value)} required />
         </div>
-        <div style={{ marginTop: 12, textAlign: "right" }}>
-          <button type="submit" disabled={busy}>
+
+        <div className="keys-header">
+          <span>API keys (optional — falls back to env / saved auth)</span>
+          <button
+            type="button"
+            className="link"
+            onClick={() => setRevealKeys((r) => !r)}
+          >
+            {revealKeys ? "hide" : "show"}
+          </button>
+        </div>
+        <div className="field">
+          <label>ANTHROPIC_API_KEY</label>
+          <input
+            type={revealKeys ? "text" : "password"}
+            value={anthropicKey}
+            onChange={(e) => setAnthropicKey(e.target.value)}
+            placeholder="sk-ant-…"
+            autoComplete="off"
+          />
+        </div>
+        <div className="field">
+          <label>GEMINI_API_KEY</label>
+          <input
+            type={revealKeys ? "text" : "password"}
+            value={geminiKey}
+            onChange={(e) => setGeminiKey(e.target.value)}
+            placeholder="AIza…"
+            autoComplete="off"
+          />
+        </div>
+        <div className="hint">
+          Keys are stored in your browser's localStorage and sent only to your local backend. Nothing is uploaded.
+        </div>
+
+        <div style={{ marginTop: 16, textAlign: "right" }}>
+          <button type="submit" disabled={busy || status !== "online"}>
             {busy ? "launching…" : "launch session"}
           </button>
         </div>

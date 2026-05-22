@@ -9,8 +9,23 @@ export type Manifest = {
   gemini: AgentRecord;
 };
 
+export const BACKEND_URL: string =
+  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? "";
+
+function url(path: string): string {
+  return BACKEND_URL + path;
+}
+
+export function backendWsUrl(path: string): string {
+  if (BACKEND_URL) {
+    return BACKEND_URL.replace(/^http/, "ws") + path;
+  }
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${location.host}${path}`;
+}
+
 async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, {
+  const res = await fetch(url(input), {
     ...init,
     headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
   });
@@ -22,6 +37,7 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  health: () => fetchJson<{ ok: boolean }>("/api/health"),
   listSessions: () => fetchJson<Manifest[]>("/api/sessions"),
   getSession: (id: string) => fetchJson<Manifest>(`/api/sessions/${id}`),
   createSession: (body: {
@@ -29,6 +45,8 @@ export const api = {
     base_branch: string;
     claude_branch: string;
     gemini_branch: string;
+    anthropic_api_key?: string;
+    gemini_api_key?: string;
   }) =>
     fetchJson<Manifest>("/api/sessions", {
       method: "POST",

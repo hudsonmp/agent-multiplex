@@ -151,12 +151,21 @@
   <p>Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel git worktrees on the same repo. One browser tab, two PTYs, raw transcripts on disk. Built so you can give two agents the same task and see where they actually diverge.</p>
 </header>
 
-<h2>install</h2>
+<h2>how it's hosted</h2>
+<p>The UI lives at a public URL. The agents themselves run on your Mac — they need access to your filesystem, your installed CLIs, and your API keys, none of which should travel to a server. The browser connects directly to your local backend; nothing in this app sees your keys or repos except your own machine.</p>
+<dl class="kv">
+  <dt>hosted UI</dt><dd>Open the app in your browser. Static SPA, no account, no signup.</dd>
+  <dt>your Mac</dt><dd>Run the backend locally with one command. It spawns the agent PTYs and serves them to the hosted UI over <code>http://localhost:4040</code>.</dd>
+</dl>
+
+<h2>run the local backend</h2>
 <pre><span class="p">$</span> git clone https://github.com/hudsonmp/agent-multiplex.git
 <span class="p">$</span> cd agent-multiplex
 <span class="p">$</span> npm install                <span class="c"># compiles node-pty natively</span>
-<span class="p">$</span> npm run dev                <span class="c"># backend :4040, frontend :5173</span></pre>
-<p>Open <a href="http://localhost:5173">localhost:5173</a>. Requires Node 20+ and git. On macOS, the node-pty build needs <code>xcode-select --install</code>.</p>
+<span class="p">$</span> npm run dev -w backend     <span class="c"># listens on :4040</span></pre>
+<p>Requires Node 20+ and git. On macOS, node-pty's build needs <code>xcode-select --install</code>.</p>
+
+<p>The hosted UI polls <code>localhost:4040</code> every few seconds. When the backend is running, the status indicator flips to <strong>backend online</strong> and the launch form unlocks.</p>
 
 <dl class="kv">
   <dt>claude</dt><dd>Anthropic's Claude Code. Install per <a href="https://docs.claude.com/en/docs/claude-code">docs.claude.com</a>.</dd>
@@ -167,6 +176,9 @@
   <b>graceful degradation</b>
   If only one binary is on <code>$PATH</code>, the missing pane shows <code>exited (127)</code> and the rest of the session runs normally. You can evaluate the harness before installing both.
 </div>
+
+<h2>api keys</h2>
+<p>The launcher form has optional fields for <code>ANTHROPIC_API_KEY</code> and <code>GEMINI_API_KEY</code>. They're stored in your browser's <code>localStorage</code> and sent only to your own local backend, which injects them as env vars into the spawned PTYs. Leave them blank to fall back to whatever auth the CLIs already have on your machine (e.g. <code>claude auth login</code>, or <code>GEMINI_API_KEY</code> in your shell).</p>
 
 <h2>how it works</h2>
 <p>Three design choices do most of the work. Each is non-obvious enough to be worth stating before you use the tool, because they're what makes the comparison faithful.</p>
@@ -182,8 +194,9 @@
 
 <h2>run a session</h2>
 <ol>
-  <li>Enter the absolute path of a git repo. Click <strong>load branches</strong>.</li>
+  <li>In the <em>repo</em> field, paste either an absolute local path (<code>/Users/you/your-project</code>) or a GitHub URL (<code>https://github.com/foo/bar</code>). URLs are cloned to <code>~/.agent-multiplex/repos/&lt;owner&gt;__&lt;repo&gt;/</code> on first use and refreshed thereafter. Click <strong>load branches</strong>.</li>
   <li>Pick a base branch. The default agent branches (<code>mux/&lt;agent&gt;-&lt;timestamp&gt;</code>) are fine — they keep harness branches clearly out-of-band from your normal work.</li>
+  <li>(Optional) Enter API keys.</li>
   <li>Launch. Two worktrees are created; each agent boots in its own.</li>
   <li>Type into either pane. Drag the divider. Browser resize reflows both terminals.</li>
   <li>Close the session: PTYs are killed, worktrees removed, manifest sealed with <code>closed_at</code>. Branches and logs are preserved.</li>

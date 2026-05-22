@@ -1,5 +1,6 @@
 import Fastify, { FastifyInstance } from "fastify";
 import websocket from "@fastify/websocket";
+import cors from "@fastify/cors";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync } from "node:fs";
@@ -11,6 +12,11 @@ import { resizePane, subscribe, writeInput } from "./pty.js";
 
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false });
+  await app.register(cors, {
+    origin: true,
+    credentials: false,
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  });
   await app.register(websocket);
 
   app.get("/api/health", async () => ({ ok: true }));

@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-10_x"]
+
+[phases.install]
+cmds = [
+  "npm install --workspace frontend --workspace site --include-workspace-root --no-audit --no-fund"
+]
+
+[phases.build]
+cmds = ["VITE_BACKEND_URL=http://localhost:4040 npm run build -w frontend"]
+
+[start]
+cmd = "node site/server.js"
