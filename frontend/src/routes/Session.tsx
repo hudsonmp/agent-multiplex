@@ -19,7 +19,9 @@ export function Session() {
     return (
       <div className="home">
         <div className="error">{error}</div>
-        <a href="/">← back</a>
+        <p>
+          <a href="/">← back</a>
+        </p>
       </div>
     );
   }
@@ -38,12 +40,17 @@ export function Session() {
     <div className="session-view">
       <div className="session-header">
         <span>
-          <a href="/">←</a> <span className="id">{manifest.id}</span> · {manifest.repo_path} ·
-          base <code>{manifest.base_branch}</code>
+          <a href="/">← index</a> &nbsp;·&nbsp;{" "}
+          <span className="id">{manifest.id}</span>{" "}
+          <span className="repo">
+            · {manifest.repo_path} · base <code>{manifest.base_branch}</code>
+          </span>
         </span>
         <span>
           {manifest.closed_at ? (
-            <span style={{ color: "var(--muted)" }}>closed {new Date(manifest.closed_at).toLocaleTimeString()}</span>
+            <span className="repo">
+              closed {new Date(manifest.closed_at).toLocaleTimeString()}
+            </span>
           ) : (
             <button className="danger" type="button" onClick={close}>
               close session

@@ -113,30 +113,37 @@ export function Home() {
   return (
     <div className="home">
       <h1>agent-multiplex</h1>
+      <p className="subtitle">
+        Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel
+        git worktrees on the same repo. Two PTYs in your browser, raw transcripts
+        saved locally.{" "}
+        <a href="/setup/">Setup ↗</a>
+      </p>
 
       <div className={`status status-${status}`}>
-        {status === "checking" && "looking for local backend…"}
         {status === "online" && (
           <>
-            <span className="dot" /> backend online {BACKEND_URL && <code>· {BACKEND_URL}</code>}
+            backend reachable {BACKEND_URL && <code>{BACKEND_URL}</code>}
           </>
         )}
         {status === "offline" && (
           <>
-            <span className="dot" /> backend not running. Start it locally:{" "}
-            <code>git clone github.com/hudsonmp/agent-multiplex && cd agent-multiplex && npm install && npm run dev</code>
+            backend not running. From the repo:{" "}
+            <code>npm install &amp;&amp; npm run dev -w backend</code>
           </>
         )}
+        {status === "checking" && "looking for local backend…"}
       </div>
 
       {error && <div className="error">{error}</div>}
 
       <h2>new session</h2>
-      <form className="card" onSubmit={submit}>
+      <form onSubmit={submit}>
         <div className="field">
-          <label>repo</label>
+          <label htmlFor="repo">repository</label>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
             <input
+              id="repo"
               value={repoInput}
               onChange={(e) => setRepoInput(e.target.value)}
               placeholder="/Users/you/your-repo  or  https://github.com/foo/bar"
@@ -148,9 +155,14 @@ export function Home() {
           </div>
         </div>
         <div className="field">
-          <label>base branch</label>
+          <label htmlFor="base">base branch</label>
           {branches.length > 0 ? (
-            <select value={baseBranch} onChange={(e) => setBaseBranch(e.target.value)} required>
+            <select
+              id="base"
+              value={baseBranch}
+              onChange={(e) => setBaseBranch(e.target.value)}
+              required
+            >
               {branches.map((b) => (
                 <option key={b} value={b}>
                   {b}
@@ -159,6 +171,7 @@ export function Home() {
             </select>
           ) : (
             <input
+              id="base"
               value={baseBranch}
               onChange={(e) => setBaseBranch(e.target.value)}
               placeholder="main"
@@ -167,16 +180,26 @@ export function Home() {
           )}
         </div>
         <div className="field">
-          <label>claude branch</label>
-          <input value={claudeBranch} onChange={(e) => setClaudeBranch(e.target.value)} required />
+          <label htmlFor="claude-branch">claude branch</label>
+          <input
+            id="claude-branch"
+            value={claudeBranch}
+            onChange={(e) => setClaudeBranch(e.target.value)}
+            required
+          />
         </div>
         <div className="field">
-          <label>gemini branch</label>
-          <input value={geminiBranch} onChange={(e) => setGeminiBranch(e.target.value)} required />
+          <label htmlFor="gemini-branch">gemini branch</label>
+          <input
+            id="gemini-branch"
+            value={geminiBranch}
+            onChange={(e) => setGeminiBranch(e.target.value)}
+            required
+          />
         </div>
 
         <div className="keys-header">
-          <span>API keys (optional — falls back to env / saved auth)</span>
+          <span>API keys (optional)</span>
           <button
             type="button"
             className="link"
@@ -186,8 +209,9 @@ export function Home() {
           </button>
         </div>
         <div className="field">
-          <label>ANTHROPIC_API_KEY</label>
+          <label htmlFor="ank">ANTHROPIC_API_KEY</label>
           <input
+            id="ank"
             type={revealKeys ? "text" : "password"}
             value={anthropicKey}
             onChange={(e) => setAnthropicKey(e.target.value)}
@@ -196,8 +220,9 @@ export function Home() {
           />
         </div>
         <div className="field">
-          <label>GEMINI_API_KEY</label>
+          <label htmlFor="gnk">GEMINI_API_KEY</label>
           <input
+            id="gnk"
             type={revealKeys ? "text" : "password"}
             value={geminiKey}
             onChange={(e) => setGeminiKey(e.target.value)}
@@ -205,43 +230,40 @@ export function Home() {
             autoComplete="off"
           />
         </div>
-        <div className="hint">
-          Keys are stored in your browser's localStorage and sent only to your local backend. Nothing is uploaded.
-        </div>
+        <p className="hint">
+          Keys live in your browser's localStorage and are sent only to your local
+          backend. Leave blank to use whatever auth the CLIs already have on your
+          machine.
+        </p>
 
-        <div style={{ marginTop: 16, textAlign: "right" }}>
+        <div className="submit-row">
           <button type="submit" disabled={busy || status !== "online"}>
-            {busy ? "launching…" : "launch session"}
+            {busy ? "launching…" : "launch session →"}
           </button>
         </div>
       </form>
 
       <h2>sessions</h2>
-      <div className="session-list">
-        {sessions.length === 0 && (
-          <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12 }}>
-            none yet
-          </div>
-        )}
-        {sessions.map((s) => (
-          <div key={s.id} className={`session-row ${s.closed_at ? "closed" : ""}`}>
-            <div>
+      {sessions.length === 0 ? (
+        <p className="hint">none yet.</p>
+      ) : (
+        <ul className="session-list">
+          {sessions.map((s) => (
+            <li key={s.id} className={s.closed_at ? "closed" : ""}>
               <a href={`/sessions/${s.id}`}>{s.id}</a>{" "}
               <span className="meta">
-                · {s.repo_path} · base {s.base_branch}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span className="meta">{new Date(s.created_at).toLocaleString()}</span>
+                · {s.repo_path} · base {s.base_branch} ·{" "}
+                {new Date(s.created_at).toLocaleString()}
+              </span>{" "}
               {!s.closed_at && (
-                <button className="danger" type="button" onClick={() => close(s.id)}>
+                <button className="link" type="button" onClick={() => close(s.id)}>
                   close
                 </button>
               )}
-            </div>
-          </div>
-        ))}
-      </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

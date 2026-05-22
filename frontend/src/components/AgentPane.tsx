@@ -75,14 +75,14 @@ export function AgentPane({ sessionId, agent, worktree, branch }: Props) {
     <div className="pane">
       <div className="pane-header">
         <span>
-          <span className="agent">{agent}</span> · {branch}{" "}
-          <span style={{ color: "var(--muted)" }}>· {worktree}</span>
+          <span className="agent">{agent}</span>{" "}
+          <span className="meta">· {branch} · {worktree}</span>
         </span>
-        <span>
-          {status === "open" && "● live"}
-          {status === "connecting" && "○ connecting"}
-          {status === "closed" && "○ disconnected"}
-          {status === "exited" && `× exited (${exitCode})`}
+        <span className="meta">
+          {status === "open" && "live"}
+          {status === "connecting" && "connecting…"}
+          {status === "closed" && "disconnected"}
+          {status === "exited" && `exited (${exitCode})`}
         </span>
       </div>
       <div className="pane-body">
