@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>agent-multiplex · setup</title>
+<meta name="description" content="A live web view for driving Claude Code and gemini-cli side-by-side in parallel git worktrees." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0e0e10;
+    --bg-soft: #16161a;
+    --fg: #e7dfd0;
+    --fg-strong: #f5efe2;
+    --muted: #8a8275;
+    --line: #2a2723;
+    --accent: #d49b6a;
+    --accent-soft: rgba(212, 155, 106, 0.16);
+    --danger: #d97766;
+    --serif: "Newsreader", "Hoefler Text", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --measure: 64ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(ellipse at top, rgba(212, 155, 106, 0.05), transparent 60%),
+      var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.75;
+    font-feature-settings: "calt", "liga", "ss01";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0 0.7 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 96px 32px 160px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 80px;
+  }
+
+  /* ────────────  HEADER  ──────────── */
+
+  .masthead {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 40px;
+    margin-bottom: 64px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 80px;
+    align-items: end;
+  }
+
+  .masthead .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    line-height: 1.9;
+  }
+  .masthead .meta div { display: flex; justify-content: space-between; gap: 12px; }
+  .masthead .meta b { color: var(--fg); font-weight: 500; }
+
+  .masthead h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-variation-settings: "opsz" 72;
+    font-style: italic;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.02;
+    margin: 0 0 12px;
+    color: var(--fg-strong);
+    letter-spacing: -0.02em;
+  }
+
+  .masthead h1 .blink {
+    display: inline-block;
+    width: 0.45em;
+    height: 0.72em;
+    background: var(--accent);
+    transform: translateY(0.08em);
+    margin-left: 0.08em;
+    animation: blink 1.1s steps(2) infinite;
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .masthead .tag {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .masthead .tag em {
+    color: var(--fg);
+    font-style: normal;
+    background: var(--accent-soft);
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+
+  /* ────────────  SIDEBAR  ──────────── */
+
+  .toc {
+    position: sticky;
+    top: 32px;
+    align-self: start;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .toc .label {
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: tocstep;
+  }
+  .toc li {
+    counter-increment: tocstep;
+    padding: 4px 0;
+    border-bottom: 1px dotted transparent;
+    display: flex;
+    gap: 10px;
+  }
+  .toc li::before {
+    content: counter(tocstep, decimal-leading-zero);
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .toc a {
+    color: var(--fg);
+    text-decoration: none;
+    border-bottom: 1px dotted transparent;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ────────────  MAIN  ──────────── */
+
+  main { max-width: var(--measure); }
+
+  section { margin-bottom: 56px; }
+  section:last-child { margin-bottom: 0; }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-variation-settings: "opsz" 32;
+    font-size: 28px;
+    line-height: 1.15;
+    color: var(--fg-strong);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  h2::before {
+    content: attr(data-num);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    flex-shrink: 0;
+  }
+  .lede {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 0 0 24px;
+    padding-left: 60px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  p { margin: 0 0 16px; max-width: 64ch; }
+  p strong { color: var(--fg-strong); font-weight: 500; }
+  p em {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.08em;
+    color: var(--fg-strong);
+  }
+
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  /* ────────────  CODE BLOCKS  ──────────── */
+
+  pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin: 18px 0 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: var(--fg);
+    position: relative;
+  }
+  pre::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -9px;
+    left: 14px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  pre .prompt { color: var(--accent); user-select: none; }
+  pre .comment { color: var(--muted); }
+  pre .kw { color: var(--fg-strong); font-weight: 500; }
+  pre .str { color: #c4b18a; }
+
+  code:not(pre code) {
+    background: var(--accent-soft);
+    color: var(--fg-strong);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.92em;
+  }
+
+  /* ────────────  STEPS  ──────────── */
+
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 24px 0;
+  }
+  .steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 60px;
+    padding-bottom: 24px;
+    border-left: 1px dotted var(--line);
+    margin-left: 12px;
+  }
+  .steps > li:last-child { border-left-color: transparent; padding-bottom: 4px; }
+  .steps > li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: -22px;
+    top: 0;
+    background: var(--bg);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    padding: 4px 8px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+  .steps > li > h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-variation-settings: "opsz" 18;
+    font-size: 17px;
+    margin: 0 0 6px;
+    color: var(--fg-strong);
+  }
+  .steps > li > p { margin: 0 0 10px; color: var(--fg); }
+
+  /* ────────────  ASIDES & WARNINGS  ──────────── */
+
+  .aside {
+    border-left: 2px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px;
+    margin: 22px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 12.5px;
+    color: var(--fg);
+  }
+  .aside b {
+    display: block;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .aside.warn { border-left-color: var(--danger); background: rgba(217, 119, 102, 0.1); }
+  .aside.warn b { color: var(--danger); }
+
+  /* ────────────  TREE  ──────────── */
+
+  .tree {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 22px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 18px 0;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .tree .dir { color: var(--accent); font-weight: 500; }
+  .tree .note { color: var(--muted); }
+
+  /* ────────────  FOOTER  ──────────── */
+
+  footer {
+    grid-column: 1 / -1;
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer a { color: var(--muted); border-bottom: 1px dotted var(--line); }
+  footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ────────────  ENTRANCE  ──────────── */
+
+  .masthead, .toc, section { animation: rise 700ms cubic-bezier(.2,.6,.2,1) both; }
+  section:nth-of-type(1) { animation-delay: 100ms; }
+  section:nth-of-type(2) { animation-delay: 180ms; }
+  section:nth-of-type(3) { animation-delay: 260ms; }
+  section:nth-of-type(4) { animation-delay: 340ms; }
+  section:nth-of-type(5) { animation-delay: 420ms; }
+  section:nth-of-type(6) { animation-delay: 500ms; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ────────────  RESPONSIVE  ──────────── */
+
+  @media (max-width: 820px) {
+    .wrap { grid-template-columns: 1fr; gap: 48px; padding: 56px 22px 100px; }
+    .masthead { grid-template-columns: 1fr; gap: 22px; padding-bottom: 28px; margin-bottom: 44px; }
+    .toc { position: static; }
+    h2 { font-size: 24px; gap: 12px; }
+    h2::before { font-size: 10px; }
+    .lede { padding-left: 0; }
+    .steps > li { padding-left: 44px; }
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="meta">
+      <div><span>vol.</span><b>i</b></div>
+      <div><span>issue</span><b>0.1</b></div>
+      <div><span>license</span><b>mit</b></div>
+      <div><span>updated</span><b>2026.05</b></div>
+    </div>
+    <div>
+      <h1>agent&#8202;-&#8202;multiplex<span class="blink"></span></h1>
+      <p class="tag">
+        A live web view for driving <em>Claude Code</em> and <em>gemini-cli</em> side-by-side
+        in parallel git worktrees on the same repo. Watch both agents work the same task,
+        interject in either one, and replay raw transcripts after the fact.
+      </p>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <div class="label">— contents —</div>
+    <ol>
+      <li><a href="#what">what it is</a></li>
+      <li><a href="#prereq">prerequisites</a></li>
+      <li><a href="#install">install</a></li>
+      <li><a href="#first">first session</a></li>
+      <li><a href="#shape">data on disk</a></li>
+      <li><a href="#trouble">when it breaks</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="what">
+      <h2 data-num="§ 01">What it is</h2>
+      <p class="lede">a multi-agent harness, not an IDE</p>
+      <p>
+        Two terminal panes in a browser. Each pane is a real <em>pseudo-terminal</em> attached
+        to a real agent — the left one to <code>claude</code>, the right one to <code>gemini</code> —
+        running in its own <strong>git worktree</strong> off the same repo. You type into either
+        pane as if it were your terminal; both agents work the same codebase at the same time
+        without trampling each other's commits.
+      </p>
+      <p>
+        Raw bytes from each PTY are saved to disk with millisecond timestamps, so the session
+        becomes a research artifact you can grep, diff, and replay later.
+      </p>
+      <div class="aside">
+        <b>posture</b>
+        Localhost-only. No authentication. Designed for one person at one laptop, comparing how
+        two agents reason about the same problem.
+      </div>
+    </section>
+
+    <section id="prereq">
+      <h2 data-num="§ 02">Prerequisites</h2>
+      <p class="lede">things this assumes you already have</p>
+      <ul style="padding-left: 22px; margin: 0 0 18px;">
+        <li><strong>Node.js 20+</strong> — needed because <code>node-pty</code> compiles a native addon. On macOS run <code>xcode-select --install</code> first.</li>
+        <li><strong>git</strong> — for worktree management.</li>
+        <li><strong>claude</strong> on <code>$PATH</code> — Anthropic's Claude Code CLI.</li>
+        <li><strong>gemini</strong> on <code>$PATH</code> — Google's open-source gemini-cli (<code>npm i -g @google/gemini-cli</code>).</li>
+      </ul>
+      <div class="aside">
+        <b>graceful degradation</b>
+        If only one of the two CLIs is installed, the missing pane shows <code>exited (127)</code>
+        and the rest of the session works normally. You don't have to install both to try it.
+      </div>
+    </section>
+
+    <section id="install">
+      <h2 data-num="§ 03">Install</h2>
+      <p class="lede">three commands · sixty seconds</p>
+<pre data-label="shell"><span class="comment"># clone</span>
+<span class="prompt">$</span> git clone https://github.com/hudsonmp/agent-multiplex.git
+<span class="prompt">$</span> cd agent-multiplex
+
+<span class="comment"># install deps (node-pty compiles natively here)</span>
+<span class="prompt">$</span> npm install
+
+<span class="comment"># start backend (:4040) + frontend (:5173) together</span>
+<span class="prompt">$</span> npm run dev</pre>
+      <p>
+        Then open <a href="http://localhost:5173">http://localhost:5173</a>.
+      </p>
+    </section>
+
+    <section id="first">
+      <h2 data-num="§ 04">First session</h2>
+      <p class="lede">a walkthrough · roughly thirty seconds</p>
+      <ol class="steps">
+        <li>
+          <h3>Point it at a repo</h3>
+          <p>Type any absolute path to a local git repo in the launcher — e.g. <code>/Users/you/your-project</code> — and click <b>load branches</b>. The dropdown populates.</p>
+        </li>
+        <li>
+          <h3>Pick a base branch</h3>
+          <p>Both agents will branch off this. The defaults — <code>mux/claude-&lt;timestamp&gt;</code> and <code>mux/gemini-&lt;timestamp&gt;</code> — are fine; they keep the harness's branches clearly out-of-band from your normal work.</p>
+        </li>
+        <li>
+          <h3>Launch</h3>
+          <p>The backend creates two worktrees at <code>&lt;repo&gt;-mux-claude-&lt;id&gt;/</code> and <code>&lt;repo&gt;-mux-gemini-&lt;id&gt;/</code>, spawns a PTY in each, and routes you to the split-pane view. Both agents boot in their own worktree.</p>
+        </li>
+        <li>
+          <h3>Drive them</h3>
+          <p>Click into either pane and type. Drag the divider to rebalance. Both terminals reflow on browser resize. Anything you type is sent over a websocket; anything they print is broadcast back and tee'd to disk.</p>
+        </li>
+        <li>
+          <h3>Close cleanly</h3>
+          <p>Hit <b>close session</b>. Both PTYs are killed, both worktrees are removed (<code>git worktree remove --force</code>), and the manifest is marked <code>closed_at</code>. Log files stay.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="shape">
+      <h2 data-num="§ 05">Data on disk</h2>
+      <p class="lede">where the artifacts live · what they contain</p>
+<div class="tree"><span class="dir">~/.agent-multiplex/</span>
+└── <span class="dir">sessions/</span>
+    └── <span class="dir">&lt;session_id&gt;/</span>
+        ├── manifest.json   <span class="note">┄ id · created_at · closed_at? · worktree paths · exit codes</span>
+        ├── claude.log      <span class="note">┄ raw PTY bytes · \x1e&lt;unix_ms&gt;\x1e timestamp markers</span>
+        └── gemini.log      <span class="note">┄ same</span></div>
+      <p>
+        The timestamp markers use ASCII <code>\x1e</code> (Record Separator) because that byte never
+        appears in ANSI escape sequences or normal terminal output — so the markers can be stripped
+        cleanly without colliding with anything the agents emit. To replay a transcript:
+      </p>
+<pre data-label="shell"><span class="prompt">$</span> cat ~/.agent-multiplex/sessions/&lt;id&gt;/claude.log \
+      | perl -pe 's/\x1e\d+\x1e//g'</pre>
+    </section>
+
+    <section id="trouble">
+      <h2 data-num="§ 06">When it breaks</h2>
+      <p class="lede">three problems you'll probably hit</p>
+
+      <div class="aside warn">
+        <b>node-pty fails to build</b>
+        You're missing build tools. On macOS: <code>xcode-select --install</code>. On Linux:
+        <code>apt-get install build-essential python3</code>. Then <code>rm -rf node_modules</code>
+        and <code>npm install</code> again.
+      </div>
+
+      <div class="aside warn">
+        <b>pane shows <code>command not found</code></b>
+        The PTY can't see the agent binary on <code>$PATH</code>. The server augments PATH with
+        <code>~/.local/bin</code>, <code>~/bin</code>, <code>/opt/homebrew/bin</code>, and the usual
+        system dirs; if your CLI is somewhere else, symlink it into one of those.
+      </div>
+
+      <div class="aside warn">
+        <b>worktrees pile up after a crash</b>
+        If the backend dies mid-session, the worktrees outlive it. Clean up manually:
+        <code>git worktree list</code>, then <code>git worktree remove --force &lt;path&gt;</code>
+        for each <code>-mux-*</code> entry.
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>agent-multiplex · mit · localhost-only</span>
+    <span>
+      <a href="https://github.com/hudsonmp/agent-multiplex">source on github</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/hudsonmp">@hudsonmp</a>
+    </span>
+  </footer>
+
+</div>
+</body>
+</html>
