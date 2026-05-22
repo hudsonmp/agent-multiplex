@@ -3,144 +3,210 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>agent-multiplex</title>
+<title>agent-multiplex · setup</title>
 <meta name="description" content="Drive Claude Code and gemini-cli side-by-side in parallel git worktrees on the same repo." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0d0d10;
-    --fg: #d6d3cc;
-    --fg-strong: #f1ede5;
-    --muted: #7d7a72;
-    --muted-soft: #5a584f;
-    --line: #232225;
-    --accent: #c89766;
-    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --bg: #fdfaf3;
+    --fg: #1a1a1a;
+    --muted: #6a6a6a;
+    --rule: #c8c2b5;
+    --link: #0000ee;
+    --link-visited: #551a8b;
+    --warn: #8b0000;
+    --hl: #fff2c8;
+    --serif: "Newsreader", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
   }
   *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
   body {
-    background: var(--bg);
     color: var(--fg);
-    font-family: var(--mono);
-    font-size: 13.5px;
-    line-height: 1.78;
-    -webkit-font-smoothing: antialiased;
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.6;
+    font-variation-settings: "opsz" 16;
+    -webkit-font-smoothing: subpixel-antialiased;
   }
-  .wrap { max-width: 72ch; margin: 0 auto; padding: 56px 28px 120px; }
-  header { margin-bottom: 40px; }
-  h1 { font-size: 15px; font-weight: 500; margin: 0 0 6px; color: var(--fg-strong); }
-  header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 64ch; }
-  h2 {
-    font-size: 11.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
+  .wrap { max-width: 640px; margin: 0 auto; padding: 64px 28px 140px; }
+  a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+  a:visited { color: var(--link-visited); }
+  a:hover { background: var(--hl); }
+  ::selection { background: var(--hl); }
+
+  /* ─────────────────────────────  Header  ───────────────────────────── */
+  header { margin-bottom: 36px; }
+  h1 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 0 0 6px;
+    font-variation-settings: "opsz" 36;
+    letter-spacing: -0.005em;
+  }
+  header .subtitle {
     color: var(--muted);
-    font-weight: 500;
-    margin: 52px 0 14px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--line);
+    font-size: 16px;
+    margin: 0;
+    max-width: 56ch;
   }
-  h3 {
-    font-size: 13.5px;
-    font-weight: 500;
-    color: var(--fg-strong);
-    margin: 26px 0 8px;
-  }
-  h3::before { content: "— "; color: var(--accent); }
-  p { margin: 0 0 14px; }
-  p strong { color: var(--fg-strong); font-weight: 500; }
-  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
-  a:hover { border-bottom-color: var(--accent); }
-  ul, ol { margin: 0 0 14px; padding-left: 22px; }
-  li { margin-bottom: 6px; }
-  li::marker { color: var(--muted); }
-  code:not(pre code) {
-    color: var(--fg-strong);
-    background: transparent;
-    padding: 0;
-    font-size: 0.95em;
-  }
-  code:not(pre code)::before,
-  code:not(pre code)::after { content: "`"; color: var(--muted-soft); }
-  pre {
-    background: transparent;
-    border-left: 2px solid var(--line);
-    padding: 4px 0 4px 16px;
-    margin: 14px 0 22px;
+  header .live {
+    margin-top: 14px;
     font-family: var(--mono);
     font-size: 13px;
-    line-height: 1.75;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 8px 0;
+  }
+
+  /* ─────────────────────────────  Sections  ───────────────────────────── */
+  h2 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 22px;
+    margin: 48px 0 4px;
+    font-variation-settings: "opsz" 24;
+  }
+  h2::before { content: "§ "; color: var(--muted); font-style: normal; }
+  h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    margin: 24px 0 6px;
+    font-variation-settings: "opsz" 18;
+  }
+  p { margin: 0 0 14px; }
+  p strong { font-weight: 600; }
+  ul, ol { margin: 0 0 14px; padding-left: 1.4em; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+
+  /* ─────────────────────────────  Code  ───────────────────────────── */
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    color: var(--fg);
+  }
+  pre {
+    background: #f5f0e3;
+    border: 1px solid var(--rule);
+    padding: 12px 16px;
+    margin: 14px 0 22px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.7;
     overflow-x: auto;
     color: var(--fg);
   }
-  pre .c { color: var(--muted); }
-  pre .p { color: var(--accent); user-select: none; }
-  .note {
-    border-left: 2px solid var(--accent);
-    padding: 4px 0 4px 16px;
+  pre .c { color: var(--muted); font-style: italic; }
+  pre .p { color: var(--warn); user-select: none; }
+
+  /* ─────────────────────────────  Numbered steps  ───────────────────────────── */
+  ol.steps {
+    counter-reset: step;
+    list-style: none;
+    padding-left: 0;
     margin: 14px 0 22px;
+  }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.6em;
+    margin-bottom: 18px;
+  }
+  ol.steps > li::before {
+    content: counter(step) ".";
+    position: absolute;
+    left: 0;
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--muted);
+    font-size: 16px;
+    width: 2em;
+    text-align: right;
+    padding-right: 0.6em;
+  }
+  ol.steps > li h3 { margin: 0 0 4px; font-size: 16.5px; }
+
+  /* ─────────────────────────────  Definitions  ───────────────────────────── */
+  dl {
+    display: grid;
+    grid-template-columns: 11em 1fr;
+    gap: 6px 18px;
+    margin: 14px 0 22px;
+    font-size: 15.5px;
+  }
+  dl dt {
+    font-family: var(--mono);
+    font-size: 12.5px;
     color: var(--fg);
-    font-size: 13px;
+    align-self: baseline;
+  }
+  dl dd { margin: 0; }
+
+  /* ─────────────────────────────  Notes  ───────────────────────────── */
+  .note {
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 14px;
+    margin: 14px 0 22px;
+    font-size: 15.5px;
+    color: var(--fg);
   }
   .note b {
-    color: var(--accent);
-    font-weight: 500;
-    text-transform: uppercase;
-    font-size: 10.5px;
-    letter-spacing: 0.15em;
     display: block;
-    margin-bottom: 4px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 2px;
+    text-transform: none;
+    letter-spacing: 0;
   }
-  .kv {
-    display: grid;
-    grid-template-columns: 14ch 1fr;
-    gap: 8px 18px;
-    margin: 0 0 22px;
-    font-size: 12.5px;
-  }
-  .kv dt { color: var(--muted); }
-  .kv dd { margin: 0; color: var(--fg); }
-  .lenses {
-    display: grid;
-    gap: 18px;
-    margin: 14px 0 22px;
-  }
+
+  /* ─────────────────────────────  Lenses  ───────────────────────────── */
+  .lenses { margin: 14px 0 22px; }
   .lens {
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 14px 16px;
+    padding: 14px 0;
+    border-top: 1px dotted var(--rule);
+    font-size: 15.5px;
   }
+  .lens:last-child { border-bottom: 1px dotted var(--rule); }
   .lens h4 {
-    margin: 0 0 6px;
-    font-size: 12px;
+    margin: 0 0 4px;
+    font-family: var(--serif);
+    font-style: italic;
     font-weight: 500;
-    color: var(--fg-strong);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
+    font-size: 16.5px;
   }
-  .lens h4 span { color: var(--accent); margin-right: 8px; }
-  .lens p {
-    margin: 0;
+  .lens h4 .n {
+    color: var(--muted);
+    font-style: normal;
+    font-family: var(--mono);
     font-size: 12.5px;
-    color: var(--fg);
+    margin-right: 8px;
   }
+  .lens p { margin: 0; }
+
+  /* ─────────────────────────────  Footer  ───────────────────────────── */
   footer {
-    margin-top: 72px;
-    padding-top: 20px;
-    border-top: 1px solid var(--line);
-    font-size: 11.5px;
+    margin-top: 64px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-size: 13.5px;
     color: var(--muted);
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px;
   }
-  footer a { color: var(--muted); }
-  footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-  ::selection { background: var(--accent); color: var(--bg); }
 </style>
 </head>
 <body>
@@ -148,83 +214,139 @@
 
 <header>
   <h1>agent-multiplex</h1>
-  <p>Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel git worktrees on the same repo. One browser tab, two PTYs, raw transcripts on disk. Built so you can give two agents the same task and see where they actually diverge.</p>
+  <p class="subtitle">
+    Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel git
+    worktrees on the same repo. Two PTYs in your browser, raw transcripts saved
+    locally. Built so you can give two agents the same task and see where they
+    actually diverge.
+  </p>
+  <div class="live">
+    app: <a href="https://agent-multiplex-production.up.railway.app">agent-multiplex-production.up.railway.app</a>
+    &nbsp;·&nbsp; source: <a href="https://github.com/hudsonmp/agent-multiplex">github.com/hudsonmp/agent-multiplex</a>
+  </div>
 </header>
 
-<h2>how it's hosted</h2>
-<p>The UI lives at a public URL. The agents themselves run on your Mac — they need access to your filesystem, your installed CLIs, and your API keys, none of which should travel to a server. The browser connects directly to your local backend; nothing in this app sees your keys or repos except your own machine.</p>
-<dl class="kv">
-  <dt>hosted UI</dt><dd>Open the app in your browser. Static SPA, no account, no signup.</dd>
-  <dt>your Mac</dt><dd>Run the backend locally with one command. It spawns the agent PTYs and serves them to the hosted UI over <code>http://localhost:4040</code>.</dd>
+<h2>how it's split</h2>
+<p>The UI lives at a public URL; the agents run on your Mac. Your repo, your API keys, and the spawned <code>claude</code> / <code>gemini</code> processes never leave your machine. The hosted page polls <code>http://localhost:4040</code> every few seconds and flips to <em>online</em> when it finds the backend you started locally.</p>
+<dl>
+  <dt>hosted UI</dt><dd>The page you're on. Static React bundle, no account, no signup. Lives on Railway.</dd>
+  <dt>your Mac</dt><dd>The backend. Spawns PTYs, runs <code>git worktree</code>, writes transcripts to <code>~/.agent-multiplex/sessions/</code>.</dd>
 </dl>
+<p>Chrome's secure-context rule lets the HTTPS page reach <code>http://localhost</code> without mixed-content blocking, so no proxy or local certs are needed.</p>
 
-<h2>run the local backend</h2>
+<h2>full setup</h2>
+<p>Maybe 5 minutes end-to-end if you already have a Node toolchain. Numbered so you can copy-paste in order.</p>
+
+<ol class="steps">
+
+  <li>
+    <h3>System prerequisites</h3>
+    <p>Node 20 or newer, git, and (on macOS) Xcode command-line tools, which <code>node-pty</code>'s native build needs.</p>
+<pre><span class="p">$</span> node --version          <span class="c"># v20.x or newer</span>
+<span class="p">$</span> git --version
+<span class="p">$</span> xcode-select --install   <span class="c"># macOS only, skip if already installed</span></pre>
+    <p>On Linux: <code>apt install build-essential python3</code> instead of the Xcode line.</p>
+  </li>
+
+  <li>
+    <h3>Install the two agent CLIs</h3>
+    <p>You can run the harness with only one installed — the missing pane will show <code>exited (127)</code> and the rest of the session works normally. But to actually compare them you want both.</p>
+<pre><span class="c"># Claude Code (Anthropic)</span>
+<span class="p">$</span> npm i -g @anthropic-ai/claude-code
+
+<span class="c"># gemini-cli (Google, open source)</span>
+<span class="p">$</span> npm i -g @google/gemini-cli</pre>
+    <p>Verify both are on <code>$PATH</code>:</p>
+<pre><span class="p">$</span> which claude
+<span class="p">$</span> which gemini</pre>
+    <p>If either is missing, see <a href="https://docs.claude.com/en/docs/claude-code">docs.claude.com</a> or <a href="https://github.com/google-gemini/gemini-cli">github.com/google-gemini/gemini-cli</a>.</p>
+  </li>
+
+  <li>
+    <h3>Authenticate each CLI (or supply keys in the UI)</h3>
+    <p>Two ways to give the CLIs access to their APIs:</p>
+    <ul>
+      <li><strong>Use the CLI's own auth.</strong> Run <code>claude</code> once and follow its login flow. For gemini: <code>export GEMINI_API_KEY=…</code> in your shell. The harness inherits these.</li>
+      <li><strong>Paste keys into the launcher form.</strong> The UI has fields for <code>ANTHROPIC_API_KEY</code> and <code>GEMINI_API_KEY</code>. They're saved to your browser's <code>localStorage</code> and sent only to your local backend, which injects them as env vars when spawning the PTYs.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h3>Clone and install the harness</h3>
 <pre><span class="p">$</span> git clone https://github.com/hudsonmp/agent-multiplex.git
 <span class="p">$</span> cd agent-multiplex
-<span class="p">$</span> npm install                <span class="c"># compiles node-pty natively</span>
-<span class="p">$</span> npm run dev -w backend     <span class="c"># listens on :4040</span></pre>
-<p>Requires Node 20+ and git. On macOS, node-pty's build needs <code>xcode-select --install</code>.</p>
+<span class="p">$</span> npm install</pre>
+    <p>The install compiles <code>node-pty</code> natively. First run takes ~20 seconds; subsequent installs are fast.</p>
+  </li>
 
-<p>The hosted UI polls <code>localhost:4040</code> every few seconds. When the backend is running, the status indicator flips to <strong>backend online</strong> and the launch form unlocks.</p>
+  <li>
+    <h3>Start the local backend</h3>
+<pre><span class="p">$</span> npm run dev -w backend</pre>
+    <p>You'll see <code>Server listening at http://127.0.0.1:4040</code>. Leave this running — it's the process that spawns the agents.</p>
+  </li>
 
-<dl class="kv">
-  <dt>claude</dt><dd>Anthropic's Claude Code. Install per <a href="https://docs.claude.com/en/docs/claude-code">docs.claude.com</a>.</dd>
-  <dt>gemini</dt><dd>Google's open-source gemini-cli: <code>npm i -g @google/gemini-cli</code>.</dd>
-</dl>
+  <li>
+    <h3>Open the hosted UI</h3>
+    <p>Open <a href="https://agent-multiplex-production.up.railway.app">agent-multiplex-production.up.railway.app</a>. Within a few seconds the status line at the top should flip from <em>checking</em> to <em>online</em>. The <em>launch session</em> button unlocks.</p>
+  </li>
 
-<div class="note">
-  <b>graceful degradation</b>
-  If only one binary is on <code>$PATH</code>, the missing pane shows <code>exited (127)</code> and the rest of the session runs normally. You can evaluate the harness before installing both.
-</div>
+  <li>
+    <h3>Launch a session</h3>
+    <p>In the <em>repository</em> field, paste either:</p>
+    <ul>
+      <li>an absolute local path (e.g. <code>/Users/you/your-project</code>), or</li>
+      <li>a GitHub URL (e.g. <code>https://github.com/foo/bar</code>) — cloned on first use to <code>~/.agent-multiplex/repos/&lt;owner&gt;__&lt;repo&gt;/</code>.</li>
+    </ul>
+    <p>Click <em>load branches</em>, pick a base, accept the auto-generated agent branch names, paste keys if you skipped step 3, then <em>launch session →</em>. Two git worktrees are created off the base branch, one PTY spawns in each, and the split-pane view opens.</p>
+  </li>
 
-<h2>api keys</h2>
-<p>The launcher form has optional fields for <code>ANTHROPIC_API_KEY</code> and <code>GEMINI_API_KEY</code>. They're stored in your browser's <code>localStorage</code> and sent only to your own local backend, which injects them as env vars into the spawned PTYs. Leave them blank to fall back to whatever auth the CLIs already have on your machine (e.g. <code>claude auth login</code>, or <code>GEMINI_API_KEY</code> in your shell).</p>
+  <li>
+    <h3>Drive both panes</h3>
+    <p>Click into either pane and type. Drag the divider to rebalance. Browser resize reflows both terminals. Same prompt in both panes is the basic move.</p>
+  </li>
 
-<h2>how it works</h2>
-<p>Three design choices do most of the work. Each is non-obvious enough to be worth stating before you use the tool, because they're what makes the comparison faithful.</p>
+  <li>
+    <h3>Close cleanly</h3>
+    <p>Click <em>close session</em>. PTYs are killed, both worktrees are removed (<code>git worktree remove --force</code>), the manifest is sealed with <code>closed_at</code>. Branches and log files stay so you can diff later.</p>
+  </li>
 
-<h3>PTYs, not pipes</h3>
-<p>Both <code>claude</code> and <code>gemini</code> detect when stdout is attached to a real terminal. If they see a pipe, they collapse to a degraded mode — no cursor positioning, no live progress, sometimes a different output format entirely. To see what the agent actually shows a human user, the harness allocates a <strong>pseudo-terminal</strong> per agent via <code>node-pty</code> and streams raw bytes — ANSI escapes, cursor moves, UTF-8 box-drawing — over a websocket to <code>xterm.js</code> in the browser. The browser pane is byte-equivalent to running the CLI in your own terminal.</p>
-
-<h3>Worktrees, not clones</h3>
-<p>Both agents work the same repo at the same time, so they need filesystem isolation. The harness creates two <strong>git worktrees</strong> per session — <code>&lt;repo&gt;-mux-claude-&lt;id&gt;/</code> and <code>&lt;repo&gt;-mux-gemini-&lt;id&gt;/</code> — each on its own branch off your base. Worktrees share the parent repo's object database, so this is nearly free in disk and bandwidth, but each working tree is independent: claude editing <code>foo.py</code> doesn't touch gemini's <code>foo.py</code>. Closing the session removes the worktrees; the branches stay so you can diff or merge after.</p>
-
-<h3>Bytes, not events</h3>
-<p>Transcripts are saved as <strong>raw PTY output</strong>, with <code>\x1e&lt;unix_ms&gt;\x1e</code> markers inserted between chunks. Not a structured event log, not a recording of "tool calls" — the actual bytes the agent printed, including thinking, errors, and TUI redraws. This is more verbose but doesn't lose information: any structured analysis you'd want later can be derived from the bytes, but the inverse isn't true. The <code>\x1e</code> Record Separator was picked because it never appears in ANSI escape sequences, so timestamps strip cleanly with a one-line regex.</p>
-
-<h2>run a session</h2>
-<ol>
-  <li>In the <em>repo</em> field, paste either an absolute local path (<code>/Users/you/your-project</code>) or a GitHub URL (<code>https://github.com/foo/bar</code>). URLs are cloned to <code>~/.agent-multiplex/repos/&lt;owner&gt;__&lt;repo&gt;/</code> on first use and refreshed thereafter. Click <strong>load branches</strong>.</li>
-  <li>Pick a base branch. The default agent branches (<code>mux/&lt;agent&gt;-&lt;timestamp&gt;</code>) are fine — they keep harness branches clearly out-of-band from your normal work.</li>
-  <li>(Optional) Enter API keys.</li>
-  <li>Launch. Two worktrees are created; each agent boots in its own.</li>
-  <li>Type into either pane. Drag the divider. Browser resize reflows both terminals.</li>
-  <li>Close the session: PTYs are killed, worktrees removed, manifest sealed with <code>closed_at</code>. Branches and logs are preserved.</li>
 </ol>
 
+<h2>how it works</h2>
+<p>Three design choices do most of the work. Each is worth knowing before you use the tool, because they're what makes the comparison faithful.</p>
+
+<h3>PTYs, not pipes</h3>
+<p>Both CLIs detect whether stdout is a real terminal. Piped, they collapse to a degraded mode — no cursor positioning, no live progress, sometimes a different output format entirely. The harness allocates a pseudo-terminal per agent via <code>node-pty</code> and streams raw bytes (ANSI escapes, UTF-8 box-drawing, cursor moves) over a websocket to <code>xterm.js</code>. The browser pane is byte-equivalent to running the CLI in your own terminal.</p>
+
+<h3>Worktrees, not clones</h3>
+<p>Both agents work the same repo at the same time, so they need filesystem isolation. The harness creates two <code>git worktree</code>s per session at <code>&lt;repo&gt;-mux-claude-&lt;id&gt;/</code> and <code>&lt;repo&gt;-mux-gemini-&lt;id&gt;/</code>, each on its own branch off your base. They share the parent repo's object database — nearly free in disk — but the working trees are independent.</p>
+
+<h3>Bytes, not events</h3>
+<p>Transcripts are saved as raw PTY output with <code>\x1e&lt;unix_ms&gt;\x1e</code> markers between chunks. Not a structured event log, not a recording of "tool calls" — the actual bytes the agent printed, including thinking, errors, and TUI redraws. Any structured analysis can be derived from the bytes; the inverse isn't true. The <code>\x1e</code> Record Separator was picked because it never appears in ANSI escape sequences, so timestamps strip cleanly with a one-line regex.</p>
+
 <h2>comparing the two agents</h2>
-<p>The point of running both is to see <em>where</em> they diverge — agents that produce the same answer on easy tasks can still differ wildly on the path they take to get there, and the divergence is where the interesting signal lives. A few lenses to apply when reading a session:</p>
+<p>The point of running both is to see <em>where</em> they diverge — agents that produce the same answer on easy tasks can still differ wildly on the path they take. A few lenses to apply when reading a session:</p>
 
 <div class="lenses">
   <div class="lens">
-    <h4><span>01</span>tool-call grain</h4>
-    <p>How many discrete reads / edits / shell invocations does each agent make? One agent might read three files and rewrite one; the other might read one and make ten small edits. Finer grain is often slower but recovers from mistakes more locally.</p>
+    <h4><span class="n">01</span>tool-call grain</h4>
+    <p>How many discrete reads / edits / shell invocations does each agent make? One might read three files and rewrite one; the other might read one and make ten small edits. Finer grain is often slower but recovers from mistakes more locally.</p>
   </div>
   <div class="lens">
-    <h4><span>02</span>plan visibility</h4>
-    <p>Does the agent state a plan before acting, or does it act and then summarize? Stated plans are easier to interrupt; implicit plans are faster but harder to redirect mid-task.</p>
+    <h4><span class="n">02</span>plan visibility</h4>
+    <p>Does the agent state a plan before acting, or act and then summarize? Stated plans are easier to interrupt; implicit plans are faster but harder to redirect mid-task.</p>
   </div>
   <div class="lens">
-    <h4><span>03</span>recovery from being wrong</h4>
-    <p>Make one agent guess at something it can't know (e.g. a function signature you haven't shown it). Watch how it reacts when reality contradicts the guess. Some agents double down; some retreat and re-read; some ask. The recovery shape is more revealing than the failure itself.</p>
+    <h4><span class="n">03</span>recovery from being wrong</h4>
+    <p>Make one agent guess at something it can't know (e.g. a function signature you haven't shown it). Watch how it reacts when reality contradicts the guess. Some double down; some retreat and re-read; some ask. The recovery shape is more revealing than the failure itself.</p>
   </div>
   <div class="lens">
-    <h4><span>04</span>prompt-following vs latitude</h4>
+    <h4><span class="n">04</span>prompt-following vs latitude</h4>
     <p>Give a slightly-underspecified task. Does the agent execute literally on what you said, or fill the gaps with its own judgment? Both can be right; the question is which you want when. Side-by-side makes the difference visible in a way solo runs don't.</p>
   </div>
   <div class="lens">
-    <h4><span>05</span>final diff shape</h4>
-    <p>Once both are done, diff what they actually committed (commands below). Sometimes the transcripts look similar but the diffs are wildly different. Sometimes the transcripts diverge but converge on equivalent code. Both are worth knowing.</p>
+    <h4><span class="n">05</span>final diff shape</h4>
+    <p>Once both are done, diff what they actually committed. Sometimes the transcripts look similar but the diffs are wildly different. Sometimes the transcripts diverge but converge on equivalent code. Both are worth knowing.</p>
   </div>
 </div>
 
@@ -246,32 +368,54 @@ manifest.json   claude.log   gemini.log
 <h3>good first comparisons</h3>
 <p>Tasks where divergence is likely and instructive:</p>
 <ul>
-  <li><strong>Underspecified refactor</strong> — &ldquo;Make this function easier to test&rdquo; on a non-trivial function. Tests the latitude vs literalism axis.</li>
+  <li><strong>Underspecified refactor</strong> — "Make this function easier to test" on a non-trivial function. Tests the latitude vs literalism axis.</li>
   <li><strong>Failing test</strong> — Hand them a failing unit test and the file it tests. The recovery path differs sharply across agents.</li>
   <li><strong>Same prompt, dirty repo</strong> — Run with uncommitted changes already in the base branch. Watch which agent notices.</li>
   <li><strong>Build error you can fix two ways</strong> — A type error with either an upstream fix or a downstream cast. Which one each agent picks tells you something about its priors.</li>
 </ul>
 
 <h2>data on disk</h2>
-<dl class="kv">
-  <dt>~/.agent-multiplex/sessions/&lt;id&gt;/</dt><dd></dd>
+<dl>
+  <dt>~/.agent-multiplex/<wbr>sessions/&lt;id&gt;/</dt><dd></dd>
   <dt>&nbsp;&nbsp;manifest.json</dt><dd>id, <code>created_at</code>, <code>closed_at</code>, repo_path, base_branch, per-agent {branch, worktree, exit_code}</dd>
   <dt>&nbsp;&nbsp;claude.log</dt><dd>raw PTY bytes; chunks prefixed by <code>\x1e&lt;unix_ms&gt;\x1e</code></dd>
   <dt>&nbsp;&nbsp;gemini.log</dt><dd>same</dd>
+  <dt>~/.agent-multiplex/<wbr>repos/&lt;owner&gt;__&lt;repo&gt;/</dt><dd>clones of GitHub URLs you've pointed sessions at</dd>
 </dl>
 
-<h2>notes &amp; limits</h2>
+<h2>troubleshooting</h2>
+
+<div class="note">
+  <b>node-pty fails to build</b>
+  You're missing build tools. macOS: <code>xcode-select --install</code>. Linux: <code>apt install build-essential python3</code>. Then <code>rm -rf node_modules</code> and <code>npm install</code> again.
+</div>
+
+<div class="note">
+  <b>Both panes show <code>exited (127)</code></b>
+  PATH was sanitized by npm and the agent binaries aren't visible to the spawned subprocess. The server augments PATH with <code>~/.local/bin</code>, <code>~/.npm-global/bin</code>, <code>/opt/homebrew/bin</code>, and the usual system dirs. If your CLI lives somewhere else, symlink it into one of those, or set <code>PATH</code> explicitly in the shell where you launch <code>npm run dev -w backend</code>.
+</div>
+
+<div class="note">
+  <b>UI shows <em>backend not running</em></b>
+  Make sure <code>npm run dev -w backend</code> is running and <code>curl localhost:4040/api/health</code> returns <code>{"ok":true}</code>. The hosted page polls every 4 seconds.
+</div>
+
+<div class="note">
+  <b>Worktrees pile up after a crash</b>
+  If the backend dies mid-session, the worktrees outlive it. Clean up: <code>git worktree list</code>, then <code>git worktree remove --force &lt;path&gt;</code> for each <code>-mux-*</code> entry. Closing a session does not delete the branches either; drop with <code>git branch -D mux/&lt;agent&gt;-&lt;timestamp&gt;</code>.
+</div>
+
+<h2>limits worth naming</h2>
 <ul>
-  <li>Server binds to <code>127.0.0.1</code>. No auth. Single-user, single-laptop.</li>
-  <li>The spawned subprocess inherits a sanitized PATH from npm, so the server explicitly augments it with <code>~/.local/bin</code>, <code>~/.npm-global/bin</code>, <code>/opt/homebrew/bin</code>, and the usual system dirs. If your CLI lives somewhere else, symlink it into one of those.</li>
-  <li>If the backend dies mid-session, worktrees outlive it. Clean up with <code>git worktree list</code> then <code>git worktree remove --force &lt;path&gt;</code>.</li>
-  <li>Closing a session does not delete branches. Drop them with <code>git branch -D mux/&lt;agent&gt;-&lt;timestamp&gt;</code>.</li>
-  <li>PTYs die with the backend process — there is no daemon to reattach to. A future iteration could persist sessions through restarts.</li>
+  <li>Backend binds to <code>127.0.0.1</code>. No authentication. Single-user, single-laptop.</li>
+  <li>PTYs die with the backend process. No daemon, no resume across restarts.</li>
+  <li>API keys travel from the hosted page through your browser to your local backend. They never reach Railway. Verify in DevTools network panel — POSTs go to <code>localhost:4040</code>, not <code>*.railway.app</code>.</li>
+  <li>The harness creates real git branches in your repo. They survive session close until you delete them.</li>
 </ul>
 
 <footer>
-  <span>MIT · localhost-only</span>
-  <span><a href="https://github.com/hudsonmp/agent-multiplex">github</a> · <a href="https://github.com/hudsonmp/agent-multiplex/issues">issues</a></span>
+  <span>MIT · localhost-only · agents run on your Mac</span>
+  <span><a href="https://github.com/hudsonmp/agent-multiplex">source</a> · <a href="https://github.com/hudsonmp/agent-multiplex/issues">issues</a></span>
 </footer>
 
 </div>
