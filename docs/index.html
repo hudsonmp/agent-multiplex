@@ -14,6 +14,7 @@
     --fg: #d6d3cc;
     --fg-strong: #f1ede5;
     --muted: #7d7a72;
+    --muted-soft: #5a584f;
     --line: #232225;
     --accent: #c89766;
     --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -25,44 +26,36 @@
     color: var(--fg);
     font-family: var(--mono);
     font-size: 13.5px;
-    line-height: 1.75;
+    line-height: 1.78;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap {
-    max-width: 68ch;
-    margin: 0 auto;
-    padding: 64px 28px 120px;
-  }
-  header { margin-bottom: 48px; }
-  h1 {
-    font-size: 15px;
-    font-weight: 500;
-    margin: 0 0 4px;
-    color: var(--fg-strong);
-    letter-spacing: 0;
-  }
-  header p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    max-width: 60ch;
-  }
+  .wrap { max-width: 72ch; margin: 0 auto; padding: 56px 28px 120px; }
+  header { margin-bottom: 40px; }
+  h1 { font-size: 15px; font-weight: 500; margin: 0 0 6px; color: var(--fg-strong); }
+  header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 64ch; }
   h2 {
     font-size: 11.5px;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--muted);
     font-weight: 500;
-    margin: 48px 0 14px;
+    margin: 52px 0 14px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--line);
   }
+  h3 {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--fg-strong);
+    margin: 26px 0 8px;
+  }
+  h3::before { content: "— "; color: var(--accent); }
   p { margin: 0 0 14px; }
   p strong { color: var(--fg-strong); font-weight: 500; }
   a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
   a:hover { border-bottom-color: var(--accent); }
   ul, ol { margin: 0 0 14px; padding-left: 22px; }
-  li { margin-bottom: 4px; }
+  li { margin-bottom: 6px; }
   li::marker { color: var(--muted); }
   code:not(pre code) {
     color: var(--fg-strong);
@@ -71,7 +64,7 @@
     font-size: 0.95em;
   }
   code:not(pre code)::before,
-  code:not(pre code)::after { content: "`"; color: var(--muted); }
+  code:not(pre code)::after { content: "`"; color: var(--muted-soft); }
   pre {
     background: transparent;
     border-left: 2px solid var(--line);
@@ -85,6 +78,22 @@
   }
   pre .c { color: var(--muted); }
   pre .p { color: var(--accent); user-select: none; }
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 16px;
+    margin: 14px 0 22px;
+    color: var(--fg);
+    font-size: 13px;
+  }
+  .note b {
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 0.15em;
+    display: block;
+    margin-bottom: 4px;
+  }
   .kv {
     display: grid;
     grid-template-columns: 14ch 1fr;
@@ -94,6 +103,30 @@
   }
   .kv dt { color: var(--muted); }
   .kv dd { margin: 0; color: var(--fg); }
+  .lenses {
+    display: grid;
+    gap: 18px;
+    margin: 14px 0 22px;
+  }
+  .lens {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .lens h4 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .lens h4 span { color: var(--accent); margin-right: 8px; }
+  .lens p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--fg);
+  }
   footer {
     margin-top: 72px;
     padding-top: 20px;
@@ -115,62 +148,112 @@
 
 <header>
   <h1>agent-multiplex</h1>
-  <p>Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel git worktrees on the same repo. One browser tab, two PTYs, transcripts saved to disk.</p>
+  <p>Drive <code>claude</code> and <code>gemini</code> side-by-side in parallel git worktrees on the same repo. One browser tab, two PTYs, raw transcripts on disk. Built so you can give two agents the same task and see where they actually diverge.</p>
 </header>
 
 <h2>install</h2>
 <pre><span class="p">$</span> git clone https://github.com/hudsonmp/agent-multiplex.git
 <span class="p">$</span> cd agent-multiplex
-<span class="p">$</span> npm install                <span class="c"># compiles node-pty</span>
+<span class="p">$</span> npm install                <span class="c"># compiles node-pty natively</span>
 <span class="p">$</span> npm run dev                <span class="c"># backend :4040, frontend :5173</span></pre>
-<p>Open <a href="http://localhost:5173">localhost:5173</a>. Requires Node 20+, git, and on macOS <code>xcode-select --install</code> for the node-pty build.</p>
+<p>Open <a href="http://localhost:5173">localhost:5173</a>. Requires Node 20+ and git. On macOS, the node-pty build needs <code>xcode-select --install</code>.</p>
 
-<h2>agents</h2>
 <dl class="kv">
   <dt>claude</dt><dd>Anthropic's Claude Code. Install per <a href="https://docs.claude.com/en/docs/claude-code">docs.claude.com</a>.</dd>
-  <dt>gemini</dt><dd>Google's open-source gemini-cli. <code>npm i -g @google/gemini-cli</code>.</dd>
+  <dt>gemini</dt><dd>Google's open-source gemini-cli: <code>npm i -g @google/gemini-cli</code>.</dd>
 </dl>
-<p>If only one is on <code>$PATH</code>, the other pane shows <code>exited (127)</code> and the rest of the session works. The server augments <code>$PATH</code> with <code>~/.local/bin</code>, <code>~/.npm-global/bin</code>, and <code>/opt/homebrew/bin</code>.</p>
+
+<div class="note">
+  <b>graceful degradation</b>
+  If only one binary is on <code>$PATH</code>, the missing pane shows <code>exited (127)</code> and the rest of the session runs normally. You can evaluate the harness before installing both.
+</div>
+
+<h2>how it works</h2>
+<p>Three design choices do most of the work. Each is non-obvious enough to be worth stating before you use the tool, because they're what makes the comparison faithful.</p>
+
+<h3>PTYs, not pipes</h3>
+<p>Both <code>claude</code> and <code>gemini</code> detect when stdout is attached to a real terminal. If they see a pipe, they collapse to a degraded mode — no cursor positioning, no live progress, sometimes a different output format entirely. To see what the agent actually shows a human user, the harness allocates a <strong>pseudo-terminal</strong> per agent via <code>node-pty</code> and streams raw bytes — ANSI escapes, cursor moves, UTF-8 box-drawing — over a websocket to <code>xterm.js</code> in the browser. The browser pane is byte-equivalent to running the CLI in your own terminal.</p>
+
+<h3>Worktrees, not clones</h3>
+<p>Both agents work the same repo at the same time, so they need filesystem isolation. The harness creates two <strong>git worktrees</strong> per session — <code>&lt;repo&gt;-mux-claude-&lt;id&gt;/</code> and <code>&lt;repo&gt;-mux-gemini-&lt;id&gt;/</code> — each on its own branch off your base. Worktrees share the parent repo's object database, so this is nearly free in disk and bandwidth, but each working tree is independent: claude editing <code>foo.py</code> doesn't touch gemini's <code>foo.py</code>. Closing the session removes the worktrees; the branches stay so you can diff or merge after.</p>
+
+<h3>Bytes, not events</h3>
+<p>Transcripts are saved as <strong>raw PTY output</strong>, with <code>\x1e&lt;unix_ms&gt;\x1e</code> markers inserted between chunks. Not a structured event log, not a recording of "tool calls" — the actual bytes the agent printed, including thinking, errors, and TUI redraws. This is more verbose but doesn't lose information: any structured analysis you'd want later can be derived from the bytes, but the inverse isn't true. The <code>\x1e</code> Record Separator was picked because it never appears in ANSI escape sequences, so timestamps strip cleanly with a one-line regex.</p>
 
 <h2>run a session</h2>
 <ol>
   <li>Enter the absolute path of a git repo. Click <strong>load branches</strong>.</li>
-  <li>Pick a base branch. Accept the default <code>mux/&lt;agent&gt;-&lt;timestamp&gt;</code> agent branch names.</li>
-  <li>Launch. Two worktrees are created at <code>&lt;repo&gt;-mux-claude-&lt;id&gt;/</code> and <code>&lt;repo&gt;-mux-gemini-&lt;id&gt;/</code>. Each agent boots in its own.</li>
-  <li>Type into either pane. Drag the divider. Both terminals reflow on resize.</li>
-  <li>Click <strong>close session</strong> to kill PTYs, remove worktrees, and seal the manifest. Logs are kept.</li>
+  <li>Pick a base branch. The default agent branches (<code>mux/&lt;agent&gt;-&lt;timestamp&gt;</code>) are fine — they keep harness branches clearly out-of-band from your normal work.</li>
+  <li>Launch. Two worktrees are created; each agent boots in its own.</li>
+  <li>Type into either pane. Drag the divider. Browser resize reflows both terminals.</li>
+  <li>Close the session: PTYs are killed, worktrees removed, manifest sealed with <code>closed_at</code>. Branches and logs are preserved.</li>
 </ol>
 
 <h2>comparing the two agents</h2>
-<p>Give both panes the same prompt. Watch where they diverge in approach, tool use, file edits, and final answer. After closing:</p>
-<pre><span class="p">$</span> ls ~/.agent-multiplex/sessions/&lt;id&gt;/
+<p>The point of running both is to see <em>where</em> they diverge — agents that produce the same answer on easy tasks can still differ wildly on the path they take to get there, and the divergence is where the interesting signal lives. A few lenses to apply when reading a session:</p>
+
+<div class="lenses">
+  <div class="lens">
+    <h4><span>01</span>tool-call grain</h4>
+    <p>How many discrete reads / edits / shell invocations does each agent make? One agent might read three files and rewrite one; the other might read one and make ten small edits. Finer grain is often slower but recovers from mistakes more locally.</p>
+  </div>
+  <div class="lens">
+    <h4><span>02</span>plan visibility</h4>
+    <p>Does the agent state a plan before acting, or does it act and then summarize? Stated plans are easier to interrupt; implicit plans are faster but harder to redirect mid-task.</p>
+  </div>
+  <div class="lens">
+    <h4><span>03</span>recovery from being wrong</h4>
+    <p>Make one agent guess at something it can't know (e.g. a function signature you haven't shown it). Watch how it reacts when reality contradicts the guess. Some agents double down; some retreat and re-read; some ask. The recovery shape is more revealing than the failure itself.</p>
+  </div>
+  <div class="lens">
+    <h4><span>04</span>prompt-following vs latitude</h4>
+    <p>Give a slightly-underspecified task. Does the agent execute literally on what you said, or fill the gaps with its own judgment? Both can be right; the question is which you want when. Side-by-side makes the difference visible in a way solo runs don't.</p>
+  </div>
+  <div class="lens">
+    <h4><span>05</span>final diff shape</h4>
+    <p>Once both are done, diff what they actually committed (commands below). Sometimes the transcripts look similar but the diffs are wildly different. Sometimes the transcripts diverge but converge on equivalent code. Both are worth knowing.</p>
+  </div>
+</div>
+
+<h3>operational verbs</h3>
+<pre><span class="c"># list session artifacts</span>
+<span class="p">$</span> ls ~/.agent-multiplex/sessions/&lt;id&gt;/
 manifest.json   claude.log   gemini.log
 
-<span class="c"># Replay a transcript with timestamps stripped</span>
+<span class="c"># replay a transcript with timestamps stripped</span>
 <span class="p">$</span> cat claude.log | perl -pe 's/\x1e\d+\x1e//g'
 
-<span class="c"># Diff what each agent actually committed</span>
+<span class="c"># diff each agent against the base branch</span>
 <span class="p">$</span> git -C &lt;repo&gt; diff main..mux/claude-&lt;timestamp&gt;
 <span class="p">$</span> git -C &lt;repo&gt; diff main..mux/gemini-&lt;timestamp&gt;
 
-<span class="c"># Or diff the two agents directly against each other</span>
+<span class="c"># diff the two agents directly</span>
 <span class="p">$</span> git -C &lt;repo&gt; diff mux/gemini-&lt;timestamp&gt;..mux/claude-&lt;timestamp&gt;</pre>
-<p>The <code>\x1e</code> byte (ASCII Record Separator) frames each timestamp. It does not appear in ANSI escape sequences or normal terminal output, so timestamps strip cleanly without colliding with content.</p>
 
-<h2>on disk</h2>
+<h3>good first comparisons</h3>
+<p>Tasks where divergence is likely and instructive:</p>
+<ul>
+  <li><strong>Underspecified refactor</strong> — &ldquo;Make this function easier to test&rdquo; on a non-trivial function. Tests the latitude vs literalism axis.</li>
+  <li><strong>Failing test</strong> — Hand them a failing unit test and the file it tests. The recovery path differs sharply across agents.</li>
+  <li><strong>Same prompt, dirty repo</strong> — Run with uncommitted changes already in the base branch. Watch which agent notices.</li>
+  <li><strong>Build error you can fix two ways</strong> — A type error with either an upstream fix or a downstream cast. Which one each agent picks tells you something about its priors.</li>
+</ul>
+
+<h2>data on disk</h2>
 <dl class="kv">
   <dt>~/.agent-multiplex/sessions/&lt;id&gt;/</dt><dd></dd>
-  <dt>&nbsp;&nbsp;manifest.json</dt><dd>id, timestamps, repo path, base branch, per-agent branch + worktree + exit code</dd>
-  <dt>&nbsp;&nbsp;claude.log</dt><dd>raw PTY bytes, prefixed by <code>\x1e&lt;unix_ms&gt;\x1e</code></dd>
+  <dt>&nbsp;&nbsp;manifest.json</dt><dd>id, <code>created_at</code>, <code>closed_at</code>, repo_path, base_branch, per-agent {branch, worktree, exit_code}</dd>
+  <dt>&nbsp;&nbsp;claude.log</dt><dd>raw PTY bytes; chunks prefixed by <code>\x1e&lt;unix_ms&gt;\x1e</code></dd>
   <dt>&nbsp;&nbsp;gemini.log</dt><dd>same</dd>
 </dl>
 
-<h2>notes</h2>
+<h2>notes &amp; limits</h2>
 <ul>
   <li>Server binds to <code>127.0.0.1</code>. No auth. Single-user, single-laptop.</li>
-  <li>node-pty needs build tools: <code>xcode-select --install</code> on macOS, <code>apt-get install build-essential python3</code> on Linux.</li>
+  <li>The spawned subprocess inherits a sanitized PATH from npm, so the server explicitly augments it with <code>~/.local/bin</code>, <code>~/.npm-global/bin</code>, <code>/opt/homebrew/bin</code>, and the usual system dirs. If your CLI lives somewhere else, symlink it into one of those.</li>
   <li>If the backend dies mid-session, worktrees outlive it. Clean up with <code>git worktree list</code> then <code>git worktree remove --force &lt;path&gt;</code>.</li>
   <li>Closing a session does not delete branches. Drop them with <code>git branch -D mux/&lt;agent&gt;-&lt;timestamp&gt;</code>.</li>
+  <li>PTYs die with the backend process — there is no daemon to reattach to. A future iteration could persist sessions through restarts.</li>
 </ul>
 
 <footer>
